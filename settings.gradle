@@ -1,0 +1,10 @@
+pluginManagement{
+    repositories {
+        maven {
+            allowInsecureProtocol true
+            url "http://repo.happymoney.co.kr:8082/repository/happymoney-group/"
+        }
+    }
+}
+
+rootProject.name = 'dhlee128'
