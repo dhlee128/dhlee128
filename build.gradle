@@ -27,3 +27,7 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+bootWar {
+    archiveFileName = "dhlee128.war"
+}
