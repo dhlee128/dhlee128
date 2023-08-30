@@ -1,246 +1,193 @@
+<%@ page import="com.example.dhlee128.entity.Member" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
     <title>상품권 교환소</title>
+    <link rel="stylesheet" href="css/style.css" type="text/css"/>
     <script type="text/javascript" src="js/jquery/jquery-2.1.1.min.js"></script>
 </head>
+
+<%
+    session = request.getSession();
+    Member member = (Member)session.getAttribute("sessionMember");
+%>
+
+<script src="js/commonUtil.js"></script>
+<script type="text/javascript">
+
+    function getGiftCouponInfo() {
+        if($('#phoneNo').length && $('#phoneNo').val().length==0) {
+            alert("휴대폰번호를 입력하세요");
+            $('#phoneNo').focus();
+            return false;
+        }
+        if($('#couponNo').length && $('#couponNo').val().length==0) {
+            alert("교환권번호를 입력하세요");
+            $('#couponNo').focus();
+            return false;
+        }
+
+    let data = {
+      phoneNo: $('#phoneNo').val(),
+      couponNo: $('#couponNo').val()
+    };
+
+        $.ajax({
+            type: "GET",
+            contentType: "application/json; charset=utf-8",
+            url: "/giftCoupon",
+            data: data,
+        }).success(function (res) {
+            console.log(res);
+        }).fail(function(err){
+            console.log(err);
+        });
+    }
+
+    function getSmileCouponInfo() {
+
+        $(".couponBox .couponDetailBox:eq(2)").empty();
+
+        if($('#couponNo').length && $('#couponNo').val().length==0) {
+          alert("교환권번호를 입력하세요");
+          $('#couponNo').focus();
+          return false;
+        }
+
+      $.ajax({
+        type: "GET",
+        contentType: "application/json",
+        url: "/smileCoupon/"+$('#couponNo').val(),
+      }).success(function (res) {
+          if(res.result_code=='S0000' || res.result_code=='E0103') {// S0000: 성공,E0103: 기사용
+              var htmlString = "";
+              htmlString+="<p class='infoTxt'>상품금액 : "+ res.goods_price +"</p>";
+              htmlString+="<input type='hidden' id='barcode_num' value='"+res.barcode_num+"'/>";
+              htmlString+="<input type='hidden' id='security_key' value='"+res.security_key+"'/>";
+              htmlString+="<input type='hidden' id='goods_price' value='"+res.goods_price+"'/>";
+              htmlString+="<div class='couponInDetailBox'>";
+              htmlString+="  <div class='couponSubmits'>";
+              if(res.result_code=='E0103') {// E0103: 기사용
+                  showMsg(res.result_code, res.result_msg);
+                  htmlString += "    <input type='button' class='btn_main' value='교환 취소' onClick='cancleGiftCoupon();'>";
+              }
+              if(res.result_code=='S0000') {// S0000: 성공
+                  htmlString += "    <input type='button' class='btn_main' value='교환' onClick='chngeGiftCoupon();'>";
+              }
+              htmlString+="  </div>";
+              htmlString+="</div>";
+
+              $(".couponBox .couponDetailBox:eq(2)").append(htmlString);
+
+          } else {
+              showMsg(res.result_code, res.result_msg);
+          }
+      }).fail(function(err){
+          console.log(err);
+      });
+    }
+
+    function chngeGiftCoupon() {
+
+      var data = {
+          "couponNo" : $('#barcode_num').val(),
+          "security_key" : $('#security_key').val(),
+          "goods_price" : $('#goods_price').val(),
+      };
+
+      $.ajax({
+          type: "POST",
+          dataType: "json",
+          contentType: "application/json; charset=utf-8",
+          url: "/smileCoupon",
+          data: JSON.stringify(data),
+      }).success(function (res) {
+
+          console.log(res);
+
+          /*if(res.result_code=='S0000') {
+              alert('교환 완료되었습니다. 교환내역 페이지로 이동합니다.');
+          } else {
+              alert("["+res.result_code+"] "+res.result_msg);
+          }*/
+      }).fail(function(err){
+          console.log(err);
+      });
+    }
+
+    function showMsg(code, msg) {
+      alert("["+code+"] "+msg);
+    }
+
+    function selectCoupon(coupon) {
+
+        var htmlString = "";
+        $(".couponInDetailBox > img").removeClass("select");
+
+        if(coupon=='gift') {
+            htmlString+="<p class='infoTxt'>교환권번호(쿠폰번호/바코드번호)를 정확하게 입력하세요.</p>";
+            htmlString+="<div class='couponInDetailBox'>";
+            htmlString+="  <input type='text' id='phoneNo' class='numberOnly' placeholder='기프티콘 수신 휴대폰번호를 입력해 주세요.' maxlength='11'>";
+            htmlString+="  <input type='text' id='couponNo' placeholder='바코드번호를 입력해 주세요.' style='margin-top: 7px;' maxlength='12'>";
+            htmlString+="  <div class='couponSubmits'>";
+            htmlString+="    <input type='button' class='btn_sub' value='교환내역 조회'>";
+            htmlString+="    <input type='button' class='btn_main' value='확인' onClick='getGiftCouponInfo();'>";
+            htmlString+="  </div>";
+            htmlString+="</div>";
+
+            $(".couponInDetailBox > img:eq(0)").addClass("select");
+        } else if (coupon=='smile') {
+            htmlString+="<p class='infoTxt'>교환권번호(바코드번호)를 정확하게 입력하세요.</p>";
+            htmlString+="<div class='couponInDetailBox'>";
+            htmlString+="  <input type='text' id='couponNo' placeholder='바코드번호를 입력해 주세요.' maxlength='12'>";
+            htmlString+="  <div class='couponSubmits'>";
+            htmlString+="    <input type='button' class='btn_sub' value='교환내역 조회'>";
+            htmlString+="    <input type='button' class='btn_main' value='확인' onClick='getSmileCouponInfo();'>";
+            htmlString+="  </div>";
+            htmlString+="  <div class='couponInfo'></div>";
+            htmlString+="</div>";
+
+            $(".couponInDetailBox > img:eq(1)").addClass("select");
+        }
+        $(".couponBox .couponDetailBox:eq(1)").empty().append(htmlString);
+    }
+
+</script>
+
 <body>
-    <h2>상품권 교환소</h2>
+<div class="mainBox">
+    <div class="titleBox">
+        <div class="title"><a>상품권 교환소</a></div>
+        <div class="main"><a href="/">메인화면</a><a>&nbsp;|&nbsp;</a><a href="/logout">로그아웃</a></div>
+    </div>
+    <hr/>
+    <p class="infoTxt" style="text-align: center;">다양한 교환권을 해피캐시로 충전하거나 해피머니온라인상품권으로 교환하실 수 있습니다.</p>
 
-    <div>
-        <p>다양한 교환권을 해피캐시로 충전하거나 해피머니온라인상품권으로 교환하실 수 있습니다.</p>
-        <h3>1 교환권 선택</h3>
-        <div>
-            <h4>교환권 종류를 선택하세요.</h4>
-            <ul>
-                <li>
-                    <a href="javascript:void(0);">
-                        <img src="images/coupon_1.png" alt="기프티콘">
-                    </a>
-                </li>
-                <li>
-                    <a href="javascript:void(0);">
-                        <img src="images/coupon_2.png" alt="스마일콘">
-                    </a>
-                </li>
-            </ul>
+    <div class="couponBox area1">
+        <h3>1. 교환권 선택</h3>
+        <div class="couponDetailBox">
+            <p class="infoTxt">교환권 종류를 선택하세요.</p>
+            <div class="couponInDetailBox">
+                <img src="images/coupon_1.png" onclick="selectCoupon('gift');" alt="기프티콘">
+                <img src="images/coupon_2.png" onclick="selectCoupon('smile');" alt="스마일콘">
+            </div>
         </div>
     </div>
 
-    <div>
-        <h3>2 교환권번호 입력</h3>
-        <div>
-            <h4>교환권번호(쿠폰번호/바코드번호)를 정확하게 입력하세요</h4>
-                <div>
-                    <input type="text" id="couponNo" title="쿠폰번호/바코드번호 입력" style="width:323px" maxlength="12">
-                    <div>
-                        <input type="button" value="확인1" onclick="exchangeQuery();">
-                        <input type="button" value="확인2" onclick="exchangeQuery2();">
-                        <input type="button" value="확인3" onclick="exchangeQuery3();">
-                        <input type="button" value="확인4" onclick="exchangeQuery4();">
-                        <input type="button" value="확인5" onclick="exchangeQuery5();">
-                    </div>
-                </div>
+    <div class="couponBox area2">
+        <h3>2. 교환권번호 입력</h3>
+        <div class="couponDetailBox">
+            <p class="infoTxt emptyTxt">교환권종류를 선택하세요.</p>
         </div>
     </div>
 
+    <div class="couponBox area3">
+        <h3>3. 해피캐시 충전</h3>
+        <div class="couponDetailBox">
+            <p class="infoTxt emptyTxt">교환권번호를 선택하세요.</p>
+        </div>
+    </div>
+</div>
 
-    <script>
-        function getCurrentDate() {
-            let date = new Date();
-
-            let year = date.getFullYear().toString();
-
-            let mon = date.getMonth() + 1;
-            mon = mon<10?'0'+mon.toString():mon.toString();
-
-            let day = date.getDate();
-            day = day<10? '0'+day.toString():day.toString();
-
-            let hour = date.getHours();
-            hour = hour<10?'0'+hour.toString():hour.toString();
-
-            let min = date.getMinutes();
-            min = min<10?'0'+min.toString():min.toString();
-
-            let sec = date.getSeconds();
-            sec = sec<10?'0'+sec.toString():sec.toString();
-
-            return year+mon+day+hour+min+sec
-        }
-
-
-        function exchangeQuery() {
-            console.log('exchangeQuery::'+getCurrentDate());
-            $.ajax({
-                type: "GET",
-                url: "http://tcorp.zlgoon.com/lssend/exchangeQuery.do",
-                data: {
-                    "version": "1.43",
-                    "barcode_num": "922335240221",
-                    "rcompany_id": "EC2581",
-                    "exedate": getCurrentDate(),
-                    "site_user_id": "zan03082",
-                    "branch_code": "zlgoon1"
-                },
-                dataType: "json",
-                success: function(result) {
-
-                    console.log(result);
-
-                    let str = JSON.stringify(result);
-                    console.log(str);
-
-                    console.log(result.version);
-                    console.log(result.result_code);
-                    console.log(result.result_msg);
-                    console.log(JSON.stringify(result.result_data));
-                    console.log(result.result_data.esult_code);
-                },
-                error: function(a,b,c) {
-                    console.log(JSON.stringify(a)+','+b+','+c);
-
-                    console.log(a.readyState);
-                }
-            });
-        }
-
-
-        function exchangeQuery2() {
-            console.log('exchangeQuery2::'+getCurrentDate());
-            $.ajax({
-                type: "GET",
-                url: "http://tcorp.zlgoon.com/lssend/exchangeQuery.do",
-                data: JSON.stringify({
-                    "version": "1.43",
-                    "barcode_num": "922335240221",
-                    "rcompany_id": "EC2581",
-                    "exedate": getCurrentDate(),
-                    "site_user_id": "zan03082",
-                    "branch_code": "zlgoon1"
-                }),
-                dataType: "json",
-                success: function(result) {
-
-                    console.log(result);
-
-                    let str = JSON.stringify(result);
-                    console.log(str);
-
-                    console.log(result.version);
-                    console.log(result.result_code);
-                    console.log(result.result_msg);
-                    console.log(JSON.stringify(result.result_data));
-                    console.log(result.result_data.esult_code);
-                },
-                error: function(a,b,c) {
-                    console.log(JSON.stringify(a)+','+b+','+c);
-                }
-            });
-        }
-
-        function exchangeQuery3() {
-            console.log('exchangeQuery3::'+getCurrentDate());
-            $.ajax({
-                type: "GET",
-                url: "http://tcorp.zlgoon.com/lssend/exchangeQuery.do",
-                data: JSON.stringify({
-                    "version": "1.43",
-                    "barcode_num": "922335240221",
-                    "rcompany_id": "EC2581",
-                    "exedate": getCurrentDate(),
-                    "site_user_id": "zan03082",
-                    "branch_code": "zlgoon1"
-                }),
-                dataType: "json",
-                contentType: "application/json; charset=utf-8",
-                success: function(result) {
-
-                    console.log(result);
-
-                    let str = JSON.stringify(result);
-                    console.log(str);
-
-                    console.log(result.version);
-                    console.log(result.result_code);
-                    console.log(result.result_msg);
-                    console.log(JSON.stringify(result.result_data));
-                    console.log(result.result_data.esult_code);
-                },
-                error: function(a,b,c) {
-                    console.log(JSON.stringify(a)+','+b+','+c);
-                }
-            });
-        }
-
-
-        function exchangeQuery4() {
-            console.log('exchangeQuery4::'+getCurrentDate());
-            $.ajax({
-                type: "POST",
-                url: "http://tcorp.zlgoon.com/lssend/exchangeQuery.do",
-                data: JSON.stringify({
-                    "version": "1.43",
-                    "barcode_num": "922335240221",
-                    "rcompany_id": "EC2581",
-                    "exedate": getCurrentDate(),
-                    "site_user_id": "zan03082",
-                    "branch_code": "zlgoon1"
-                }),
-                dataType: "json",
-                success: function(result) {
-
-                    console.log(result);
-
-                    let str = JSON.stringify(result);
-                    console.log(str);
-
-                    console.log(result.version);
-                    console.log(result.result_code);
-                    console.log(result.result_msg);
-                    console.log(JSON.stringify(result.result_data));
-                    console.log(result.result_data.esult_code);
-                },
-                error: function(a,b,c) {
-                    console.log(JSON.stringify(a)+','+b+','+c);
-                }
-            });
-        }
-
-        function exchangeQuery5() {
-            console.log('exchangeQuery5::'+getCurrentDate());
-            $.ajax({
-                type: "POST",
-                url: "http://tcorp.zlgoon.com/lssend/exchangeQuery.do",
-                data: JSON.stringify({
-                    "version": "1.43",
-                    "barcode_num": "922335240221",
-                    "rcompany_id": "EC2581",
-                    "exedate": getCurrentDate(),
-                    "site_user_id": "zan03082",
-                    "branch_code": "zlgoon1"
-                }),
-                dataType: "json",
-                contentType: "application/json; charset=utf-8",
-                success: function(result) {
-
-                    console.log(result);
-
-                    let str = JSON.stringify(result);
-                    console.log(str);
-
-                    console.log(result.version);
-                    console.log(result.result_code);
-                    console.log(result.result_msg);
-                    console.log(JSON.stringify(result.result_data));
-                    console.log(result.result_data.esult_code);
-                },
-                error: function(a,b,c) {
-                    console.log(JSON.stringify(a)+','+b+','+c);
-                }
-            });
-        }
-
-    </script>
 </body>
 </html>
