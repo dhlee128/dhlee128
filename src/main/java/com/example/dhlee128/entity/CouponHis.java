@@ -27,7 +27,7 @@ public class CouponHis {
     private String goodsPrice;
 
     @NotNull
-    private String use_balance;
+    private String useBalance;
 
     @NotNull
     private String orderBalance;

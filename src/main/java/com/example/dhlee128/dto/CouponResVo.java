@@ -44,7 +44,7 @@ public class CouponResVo {
         couponHis.setBarcodeNum(this.barcode_num);
         couponHis.setGoodsPrice(this.goods_price);
         couponHis.setOrderBalance(this.order_balance);
-        couponHis.setUse_balance(this.use_balance);
+        couponHis.setUseBalance(this.use_balance);
         couponHis.setExchangeNum(this.exchange_num);
         couponHis.setSecurityKey(this.security_key);
         couponHis.setExedate(this.exedate);

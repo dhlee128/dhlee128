@@ -1,4 +1,4 @@
-    package com.example.dhlee128.repository;
+package com.example.dhlee128.repository;
 
 import com.example.dhlee128.entity.SmileCoupon;
 import org.springframework.data.jpa.repository.JpaRepository;

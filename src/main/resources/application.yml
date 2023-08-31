@@ -45,4 +45,11 @@ server:
       init-parameters:
         development: true
 
+---
 
+smileCoupon:
+  hostName: "http://tcorp.zlgoon.com"
+  version: "1.43"
+  rcompanyId: "EC2581"
+  branchCode: "happymoney"
+  branchName: "해피머니"

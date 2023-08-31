@@ -3,6 +3,7 @@ package com.example.dhlee128.controller;
 import com.example.dhlee128.dto.CouponDto;
 import com.example.dhlee128.dto.CouponResVo;
 import com.example.dhlee128.entity.Member;
+import com.example.dhlee128.service.GiftCouponService;
 import com.example.dhlee128.service.SmileCouponService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,11 +17,11 @@ import javax.servlet.http.HttpServletRequest;
 @Slf4j
 public class CouponController {
     @GetMapping("/coupon")
-    public String coupon() {
+    public String couponPage() {
         return "coupon";
     }
 
-    //private final GiftCouponService giftCouponService;
+    private final GiftCouponService giftCouponService;
     private final SmileCouponService SmileCouponService;
 
     @ResponseBody
@@ -30,26 +31,26 @@ public class CouponController {
         Member member = (Member)request.getSession().getAttribute("sessionMember");
         couponDto.setUserId(member.getUserId());
 
-        //return giftCouponService.findCouponInfo(couponDto);
-        return null;
+        return giftCouponService.getCoupon(couponDto);
+
     }
 
     @ResponseBody
     @GetMapping("/smileCoupon/{couponNo}")
-    public CouponResVo getSmileCoupon(@PathVariable String couponNo, HttpServletRequest request) {
+    public CouponResVo getSmileCouponProc(@PathVariable String couponNo, HttpServletRequest request) {
 
         Member member = (Member)request.getSession().getAttribute("sessionMember");
         CouponDto couponDto = new CouponDto();
         couponDto.setCouponNo(couponNo);
         couponDto.setUserId(member.getUserId());
 
-        return SmileCouponService.getSmileCoupon(couponDto);
+        return SmileCouponService.getCoupon(couponDto);
 
     }
 
     @ResponseBody
     @PostMapping("/changeSmileCoupon")
-    public CouponResVo changeSmileCoupon(@RequestBody CouponDto couponDto, HttpServletRequest request) {
+    public CouponResVo changeSmileCouponProc(@RequestBody CouponDto couponDto, HttpServletRequest request) {
 
         Member member = (Member)request.getSession().getAttribute("sessionMember");
         couponDto.setUserId(member.getUserId());
@@ -60,7 +61,7 @@ public class CouponController {
 
     @ResponseBody
     @PostMapping("/cancelSmileCoupon")
-    public CouponResVo cancelSmileCoupon(@RequestBody CouponDto couponDto, HttpServletRequest request) {
+    public CouponResVo cancelSmileCouponProc(@RequestBody CouponDto couponDto, HttpServletRequest request) {
 
         Member member = (Member)request.getSession().getAttribute("sessionMember");
         couponDto.setUserId(member.getUserId());

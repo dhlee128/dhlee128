@@ -1,17 +1,20 @@
 package com.example.dhlee128.entity;
 
 import com.example.dhlee128.dto.MemberDto;
+import com.example.dhlee128.entity.BaseTimeEntity;
 import com.sun.istack.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import org.hibernate.annotations.DynamicUpdate;
 
 import javax.persistence.*;
 
 @NoArgsConstructor
 @Data
 @Entity
+@DynamicUpdate //변경한 필드만 수정
 @Table(name="MEMBER")
 public class Member extends BaseTimeEntity {
 

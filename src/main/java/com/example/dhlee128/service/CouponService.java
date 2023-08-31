@@ -8,7 +8,7 @@ import java.util.Calendar;
 
 public abstract class CouponService {
 
-    public abstract CouponResVo getSmileCoupon(CouponDto couponDto);
+    public abstract CouponResVo getCoupon(CouponDto couponDto);
 
     public abstract CouponResVo changeCoupon(CouponDto couponDto);
 

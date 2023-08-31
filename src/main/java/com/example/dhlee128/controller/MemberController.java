@@ -19,8 +19,30 @@ public class MemberController {
     private final MemberService memberService;
 
     @GetMapping("/login")
-    public String login() {
+    public String loginPage() {
         return "login";
+    }
+
+    @GetMapping("/memberInfo")
+    public String memberPage() {
+
+        return "memberInfo";
+    }
+
+    @GetMapping("/join")
+    public String joinPage() {
+        return "join";
+    }
+
+    @GetMapping("/logout")
+    public String logoutPage(HttpServletRequest request) {
+
+        HttpSession session = request.getSession(false);
+        if(session!=null) {
+            session.invalidate();
+        }
+
+        return "redirect:/";
     }
 
     @ResponseBody
@@ -40,22 +62,6 @@ public class MemberController {
         }
     }
 
-    @GetMapping("/logout")
-    public String logout(HttpServletRequest request) {
-
-        HttpSession session = request.getSession(false);
-        if(session!=null) {
-            session.invalidate();
-        }
-
-        return "redirect:/";
-    }
-
-    @GetMapping("/join")
-    public String join() {
-        return "join";
-    }
-
     @ResponseBody
     @PostMapping("/join")
     public String joinProc(MemberDto dto) {
@@ -63,12 +69,6 @@ public class MemberController {
         if(memberService.join(dto)) return "ok";
 
         return "fail";
-    }
-
-    @GetMapping("/memberInfo")
-    public String member() {
-
-        return "memberInfo";
     }
 
     @ResponseBody

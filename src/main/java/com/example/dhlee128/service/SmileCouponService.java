@@ -6,13 +6,12 @@ import com.example.dhlee128.entity.CouponHis;
 import com.example.dhlee128.entity.SmileCoupon;
 import com.example.dhlee128.repository.CouponHisRepository;
 import com.example.dhlee128.repository.SmileCouponRepository;
-import com.example.dhlee128.util.Constants;
+import com.example.dhlee128.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,24 +24,37 @@ import java.net.*;
 @Slf4j
 public class SmileCouponService extends CouponService {
 
-    private static final Logger logger = LoggerFactory.getLogger(SmileCouponService.class);
-
     private final CouponHisRepository couponHisRepository;
 
     private final SmileCouponRepository smileCouponRepository;
 
-    @Override
-    public CouponResVo getSmileCoupon(CouponDto dto) {
+    @Value("${smileCoupon.hostName}")
+    private String hostName;
 
-        String path = Constants.HOST_NAME+"/lssend/exchangeQuery.do";
+    @Value("${smileCoupon.version}")
+    private String version;
+
+    @Value("${smileCoupon.rcompanyId}")
+    private String rcompanyId;
+
+    @Value("${smileCoupon.branchCode}")
+    private String branchCode;
+
+    @Value("${smileCoupon.branchName}")
+    private String branchName;
+
+    @Override
+    public CouponResVo getCoupon(CouponDto dto) {
+
+        String path = hostName+"/lssend/exchangeQuery.do";
 
         JSONObject param = new JSONObject();
-        param.put("version", Constants.VERSION);
+        param.put("version", version);
         param.put("barcode_num", dto.getCouponNo());
-        param.put("rcompany_id", Constants.RCOMPANY_ID);
+        param.put("rcompany_id", rcompanyId);
         param.put("exedate", getDate());
         param.put("site_user_id", dto.getUserId());
-        param.put("branch_code", Constants.BRANCH_CODE);
+        param.put("branch_code", branchCode);
 
         JSONArray paramArr = new JSONArray();
         paramArr.put(param);
@@ -69,10 +81,16 @@ public class SmileCouponService extends CouponService {
             bw.flush();
             bw.close();
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            StringBuffer sb = new StringBuffer();
+            String readLine;
 
-            String returnMsg = URLDecoder.decode(reader.readLine(), "euc-kr");
+            while ((readLine = br.readLine()) != null) {
+                sb.append(readLine);
+            }
+            br.close();
 
+            String returnMsg = sb.toString();
             log.info("::::getSmileCoupon returnMsg::::"+returnMsg);
 
             JSONObject jObj = new JSONObject(returnMsg);
@@ -87,7 +105,7 @@ public class SmileCouponService extends CouponService {
 
             coupon = CouponResVo.builder()
                     .result_code(result_code)
-                    .result_msg(result_msg)
+                    .result_msg(URLDecoder.decode(result_msg, "euc-kr"))
                     .barcode_num(barcode_num)
                     .order_balance(order_balance)
                     .goods_price(goods_price)
@@ -97,18 +115,21 @@ public class SmileCouponService extends CouponService {
             if("E0103".equals(result_code)) { //기사용
                 SmileCoupon findSmileCoupon = smileCouponRepository.findByUserIdAndBarcodeNum(dto.getUserId(), dto.getCouponNo());
 
+                coupon.setGoods_price(findSmileCoupon.getGoodsPrice());
+
                 if(findSmileCoupon == null) { //취소여부
                     coupon.setIsCancel("N");
                 } else {
                     coupon.setIsCancel("Y");
+                    coupon.setSecurity_key(findSmileCoupon.getSecurityKey());
                     coupon.setExchange_num(findSmileCoupon.getExchangeNum());
                 }
             }
 
         } catch (ProtocolException e) {
-            logger.warn(e.getLocalizedMessage());
+            e.printStackTrace();
         } catch (IOException e) {
-            logger.warn(e.getLocalizedMessage());
+            e.printStackTrace();
         }
 
         return coupon;
@@ -118,14 +139,14 @@ public class SmileCouponService extends CouponService {
     @Transactional
     public CouponResVo changeCoupon(CouponDto dto) {
 
-        String path = Constants.HOST_NAME+"/lssend/exchangeBarcode.do";
+        String path = hostName+"/lssend/exchangeBarcode.do";
 
         JSONObject param = new JSONObject();
-        param.put("version", Constants.VERSION);
+        param.put("version", version);
         param.put("barcode_num", dto.getCouponNo());
-        param.put("rcompany_id", Constants.RCOMPANY_ID);
-        param.put("branch_code", Constants.BRANCH_CODE);
-        param.put("branch_name", Constants.BRANCH_NAME);
+        param.put("rcompany_id", rcompanyId);
+        param.put("branch_code", branchCode);
+        param.put("branch_name", branchName);
         param.put("use_balance", dto.getUse_balance());
         param.put("security_key", dto.getSecurity_key());
         param.put("exedate", getDate());
@@ -134,7 +155,7 @@ public class SmileCouponService extends CouponService {
         JSONArray paramArr = new JSONArray();
         paramArr.put(param);
 
-        log.info("::::changeCoupon param::::"+paramArr.toString());
+        log.info("::::changeSmileCoupon param::::"+paramArr.toString());
 
         CouponResVo coupon = null;
 
@@ -165,8 +186,8 @@ public class SmileCouponService extends CouponService {
             }
             br.close();
 
-            String returnMsg = URLDecoder.decode(sb.toString(), "euc-kr");
-            log.info("::::changeCoupon returnMsg::::"+returnMsg);
+            String returnMsg = sb.toString();
+            log.info("::::changeSmileCoupon returnMsg::::"+returnMsg);
 
             JSONObject jObj = new JSONObject(returnMsg);
             JSONObject jObjData = (JSONObject)((JSONArray)jObj.get("result_data")).get(0);
@@ -180,11 +201,11 @@ public class SmileCouponService extends CouponService {
             String exchange_num = (String) jObjData.get("exchange_num"); //승인번호
             String security_key = (String) jObjData.get("security_key"); //거래키
             String exedate = (String) jObjData.get("exedate"); //요청일시
-            String site_user_id  = (String) jObjData.get("site_user_id "); //사용자아이디
+            String site_user_id  = (String) jObjData.get("site_user_id"); //사용자아이디
 
             coupon = CouponResVo.builder()
                     .result_code(result_code)
-                    .result_msg(result_msg)
+                    .result_msg(URLDecoder.decode(result_msg, "euc-kr"))
                     .barcode_num(barcode_num)
                     .goods_price(goods_price)
                     .order_balance(order_balance)
@@ -206,9 +227,9 @@ public class SmileCouponService extends CouponService {
                 couponHisRepository.save(hisEntity);
             }
         } catch (ProtocolException e) {
-            logger.warn(e.getLocalizedMessage());
+            e.printStackTrace();
         } catch (IOException e) {
-            logger.warn(e.getLocalizedMessage());
+            e.printStackTrace();
         }
 
         return coupon;
@@ -218,14 +239,14 @@ public class SmileCouponService extends CouponService {
     @Transactional
     public CouponResVo cancelCoupon(CouponDto dto) {
 
-        String path = Constants.HOST_NAME+"/lssend/exchangeCancel.do";
+        String path = hostName+"/lssend/exchangeCancel.do";
 
         JSONObject param = new JSONObject();
-        param.put("version", Constants.VERSION);
+        param.put("version", version);
         param.put("barcode_num", dto.getCouponNo());
-        param.put("rcompany_id", Constants.RCOMPANY_ID);
-        param.put("branch_code", Constants.BRANCH_CODE);
-        param.put("branch_name", Constants.BRANCH_NAME);
+        param.put("rcompany_id", rcompanyId);
+        param.put("branch_code", branchCode);
+        param.put("branch_name", branchName);
         param.put("exchange_num", dto.getExchange_num());
         param.put("security_key", dto.getSecurity_key());
         param.put("exedate", getDate());
@@ -234,7 +255,7 @@ public class SmileCouponService extends CouponService {
         JSONArray paramArr = new JSONArray();
         paramArr.put(param);
 
-        log.info("::::cancelCoupon param::::"+paramArr.toString());
+        log.info("::::cancelSmileCoupon param::::"+paramArr.toString());
 
         CouponResVo coupon = null;
 
@@ -265,9 +286,8 @@ public class SmileCouponService extends CouponService {
             }
             br.close();
 
-            String returnMsg = URLDecoder.decode(sb.toString(), "euc-kr");
-
-            log.info("::::cancelCoupon returnMsg::::"+returnMsg);
+            String returnMsg = sb.toString();
+            log.info("::::cancelSmileCoupon returnMsg::::"+returnMsg);
 
             JSONObject jObj = new JSONObject(returnMsg);
             JSONObject jObjData = (JSONObject)((JSONArray)jObj.get("result_data")).get(0);
@@ -285,7 +305,7 @@ public class SmileCouponService extends CouponService {
 
             coupon = CouponResVo.builder()
                     .result_code(result_code)
-                    .result_msg(result_msg)
+                    .result_msg(URLDecoder.decode(result_msg, "euc-kr"))
                     .barcode_num(barcode_num)
                     .goods_price(goods_price)
                     .order_balance(order_balance)
@@ -311,9 +331,9 @@ public class SmileCouponService extends CouponService {
             }
 
         } catch (ProtocolException e) {
-            logger.warn(e.getLocalizedMessage());
+            e.printStackTrace();
         } catch (IOException e) {
-            logger.warn(e.getLocalizedMessage());
+            e.printStackTrace();
         }
 
         return coupon;
