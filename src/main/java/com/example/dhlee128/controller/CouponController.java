@@ -48,13 +48,24 @@ public class CouponController {
     }
 
     @ResponseBody
-    @PostMapping("/smileCoupon")
+    @PostMapping("/changeSmileCoupon")
     public CouponResVo changeSmileCoupon(@RequestBody CouponDto couponDto, HttpServletRequest request) {
 
         Member member = (Member)request.getSession().getAttribute("sessionMember");
         couponDto.setUserId(member.getUserId());
 
         return SmileCouponService.changeCoupon(couponDto);
+
+    }
+
+    @ResponseBody
+    @PostMapping("/cancelSmileCoupon")
+    public CouponResVo cancelSmileCoupon(@RequestBody CouponDto couponDto, HttpServletRequest request) {
+
+        Member member = (Member)request.getSession().getAttribute("sessionMember");
+        couponDto.setUserId(member.getUserId());
+
+        return SmileCouponService.cancelCoupon(couponDto);
 
     }
 }

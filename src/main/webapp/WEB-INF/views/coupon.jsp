@@ -61,18 +61,21 @@
       }).success(function (res) {
           if(res.result_code=='S0000' || res.result_code=='E0103') {// S0000: 성공,E0103: 기사용
               var htmlString = "";
-              htmlString+="<p class='infoTxt'>상품금액 : "+ res.goods_price +"</p>";
+              htmlString+="<p class='infoTxt'>상품금액 : "+ res.goods_price +"원 | 충전가능금액 : "+res.order_balance+"원</p>";
               htmlString+="<input type='hidden' id='barcode_num' value='"+res.barcode_num+"'/>";
               htmlString+="<input type='hidden' id='security_key' value='"+res.security_key+"'/>";
-              htmlString+="<input type='hidden' id='goods_price' value='"+res.goods_price+"'/>";
+              htmlString+="<input type='hidden' id='order_balance' value='"+res.order_balance+"'/>";
               htmlString+="<div class='couponInDetailBox'>";
               htmlString+="  <div class='couponSubmits'>";
               if(res.result_code=='E0103') {// E0103: 기사용
                   showMsg(res.result_code, res.result_msg);
-                  htmlString += "    <input type='button' class='btn_main' value='교환 취소' onClick='cancleGiftCoupon();'>";
+                  if(res.isCancel=='Y') {
+                    htmlString += "    <input type='button' class='btn_main' value='교환 취소' onClick='cancelSmileCoupon();'>";
+                    htmlString += "    <input type='hidden' id='barcode_num' value='"+res.exchange_num+"'/>";
+                  }
               }
               if(res.result_code=='S0000') {// S0000: 성공
-                  htmlString += "    <input type='button' class='btn_main' value='교환' onClick='chngeGiftCoupon();'>";
+                  htmlString += "    <input type='button' class='btn_main' value='교환' onClick='changeSmileCoupon();'>";
               }
               htmlString+="  </div>";
               htmlString+="</div>";
@@ -87,36 +90,61 @@
       });
     }
 
-    function chngeGiftCoupon() {
+    function changeSmileCoupon() {
 
       var data = {
           "couponNo" : $('#barcode_num').val(),
           "security_key" : $('#security_key').val(),
-          "goods_price" : $('#goods_price').val(),
+          "use_balance" : $('#order_balance').val()
       };
 
       $.ajax({
           type: "POST",
           dataType: "json",
           contentType: "application/json; charset=utf-8",
-          url: "/smileCoupon",
+          url: "/changeSmileCoupon",
           data: JSON.stringify(data),
       }).success(function (res) {
 
           console.log(res);
 
-          /*if(res.result_code=='S0000') {
+          if(res.result_code=='S0000') {
               alert('교환 완료되었습니다. 교환내역 페이지로 이동합니다.');
           } else {
-              alert("["+res.result_code+"] "+res.result_msg);
-          }*/
+              showMsg(res.result_code, res.result_msg);
+          }
       }).fail(function(err){
           console.log(err);
       });
     }
 
-    function showMsg(code, msg) {
-      alert("["+code+"] "+msg);
+    function cancelSmileCoupon() {
+        var data = {
+              "couponNo" : $('#barcode_num').val(),
+              "exchange_num" : $('#exchange_num').val(),
+              "security_key" : $('#security_key').val()
+          };
+
+          $.ajax({
+              type: "POST",
+              dataType: "json",
+              contentType: "application/json; charset=utf-8",
+              url: "/cancelSmileCoupon",
+              data: JSON.stringify(data),
+          }).success(function (res) {
+
+              console.log(res);
+
+            if(res.result_code=='S0000') {
+                alert('충전 완료되었습니다. 교환내역 페이지로 이동합니다.');
+            } else {
+                showMsg(res.result_code, res.result_msg);
+            }
+
+          }).fail(function(err){
+              console.log(err);
+          });
+
     }
 
     function selectCoupon(coupon) {
@@ -150,6 +178,10 @@
             $(".couponInDetailBox > img:eq(1)").addClass("select");
         }
         $(".couponBox .couponDetailBox:eq(1)").empty().append(htmlString);
+    }
+
+    function showMsg(code, msg) {
+      alert("["+code+"] "+msg);
     }
 
 </script>

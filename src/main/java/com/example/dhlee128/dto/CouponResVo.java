@@ -12,6 +12,8 @@ public class CouponResVo {
     private String result_msg;
 
     private String goods_price; //상품가격
+    private String order_balance; //잔액, 교환권일 경우 상품가격
+    private String use_balance; //사용한 금액
     private String security_key; //거래키
     private String exedate; //요청일시
     private String exchange_num; //승인번호
@@ -20,14 +22,17 @@ public class CouponResVo {
 
     private String barcode_num; //상품권번호
 
+    private String isCancel; //취소가능여부
+
     public SmileCoupon toCouponEntity() {
         SmileCoupon coupon = new SmileCoupon();
 
-        coupon.setUserId(this.site_user_id);
         coupon.setBarcodeNum(this.barcode_num);
         coupon.setGoodsPrice(this.goods_price);
+        coupon.setExchangeNum(this.exchange_num);
         coupon.setSecurityKey(this.security_key);
         coupon.setExedate(this.exedate);
+        coupon.setUserId(this.site_user_id);
 
         return coupon;
     }
@@ -36,11 +41,14 @@ public class CouponResVo {
 
         CouponHis couponHis = new CouponHis();
 
-        couponHis.setUserId(this.site_user_id);
         couponHis.setBarcodeNum(this.barcode_num);
         couponHis.setGoodsPrice(this.goods_price);
+        couponHis.setOrderBalance(this.order_balance);
+        couponHis.setUse_balance(this.use_balance);
+        couponHis.setExchangeNum(this.exchange_num);
         couponHis.setSecurityKey(this.security_key);
         couponHis.setExedate(this.exedate);
+        couponHis.setUserId(this.site_user_id);
 
         return couponHis;
     }

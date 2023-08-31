@@ -1,7 +1,6 @@
 package com.example.dhlee128.entity;
 
 import com.sun.istack.NotNull;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -31,15 +30,9 @@ public class SmileCoupon {
     private String securityKey;
 
     @NotNull
-    private String exedate;
+    private String exchangeNum;
 
-    @Builder
-    public SmileCoupon(String userId, String goodsPrice, String securityKey, String exedate, String barcodeNum) {
-        this.userId = userId;
-        this.goodsPrice = goodsPrice;
-        this.securityKey = securityKey;
-        this.exedate = exedate;
-        this.barcodeNum = barcodeNum;
-    }
+    @NotNull
+    private String exedate;
 
 }

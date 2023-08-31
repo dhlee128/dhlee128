@@ -12,6 +12,8 @@ public abstract class CouponService {
 
     public abstract CouponResVo changeCoupon(CouponDto couponDto);
 
+    public abstract CouponResVo cancelCoupon(CouponDto couponDto);
+
     public String getDate() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
         Calendar cal = Calendar.getInstance();

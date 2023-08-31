@@ -13,5 +13,7 @@ public class CouponDto {
 
     private String security_key;
 
-    private String goods_price;
+    private String exchange_num;
+
+    private String use_balance;
 }
